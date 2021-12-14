@@ -1,0 +1,138 @@
+convert:
+  x_npy_plot_roc: test_data/anomaly_detection/downsampled_128_5_to_32_4_skip_method.npy
+  y_npy_plot_roc: test_data/anomaly_detection/downsampled_128_5_to_32_4_ground_truths_skip_method.npy
+  x_npy_hls_test_bench: ./test_data/anomaly_detection/test_bench/downsampled_128_5_to_32_4_skip_method.npy
+  y_npy_hls_test_bench: ./test_data/anomaly_detection/test_bench/downsampled_128_5_to_32_4_ground_truths_skip_method.npy
+  model_file: model/train_config_bits_10_frames_5_mels_128_encDims_8_hidDims_64_halfcode_1_fan_64_bn_True_qbatch_False_l1reg_0/keras_model.h5
+  Build: True
+  FIFO_opt: True
+  OutputDir: results/demo/ad03_stream_fifo_opts
+  ClockPeriod: 10
+  vivado_path: "/opt/local/Xilinx/Vivado/2019.1/bin:"
+  Board: pynq-z2
+  Trace: 0
+  fpga_part: xc7z020clg400-1
+  acc_name: anomaly_detection
+  Backend: VivadoAccelerator
+  IOType: io_stream
+  Interface: axi_stream
+  Driver: python
+  Strategy: Resource
+hls_config:
+  Backend: VivadoAccelerator
+  ClockPeriod: 10
+  HLSConfig:
+    LayerName:
+      batch_normalization:
+        Precision:
+          bias: ap_fixed<16,6>
+          scale: ap_fixed<16,6>
+        ReuseFactor: 4096
+        Trace: true
+        accum_t: ap_fixed<32,16>
+      batch_normalization_1:
+        Precision:
+          bias: ap_fixed<16,6>
+          scale: ap_fixed<16,6>
+        ReuseFactor: 4096
+        Trace: true
+      batch_normalization_2:
+        Precision:
+          bias: ap_fixed<16,6>
+          scale: ap_fixed<16,6>
+        ReuseFactor: 4096
+        Trace: true
+      batch_normalization_3:
+        Precision:
+          bias: ap_fixed<16,6>
+          scale: ap_fixed<16,6>
+        ReuseFactor: 4096
+        Trace: true
+      batch_normalization_4:
+        Precision:
+          bias: ap_fixed<16,6>
+          scale: ap_fixed<16,6>
+        ReuseFactor: 4096
+        Trace: true
+      input_1:
+        Precision: ap_fixed<8,8>
+        Trace: true
+      q_activation:
+        Precision:
+          result: ap_fixed<8,4>
+        ReuseFactor: 4096
+        Trace: true
+        accum_t: ap_fixed<32,16>
+      q_activation_1:
+        Precision:
+          result: ap_fixed<8,4>
+        ReuseFactor: 4096
+        Trace: true
+      q_activation_2:
+        Precision:
+          result: ap_fixed<8,4>
+        ReuseFactor: 4096
+        Trace: true
+      q_activation_3:
+        Precision:
+          result: ap_fixed<8,4>
+        ReuseFactor: 4096
+        Trace: true
+      q_activation_4:
+        Precision:
+          result: ap_fixed<8,4>
+        ReuseFactor: 4096
+        Trace: true
+      q_dense:
+        Precision:
+          bias: ap_fixed<8,1>
+          weight: ap_fixed<8,1>
+        ReuseFactor: 4096
+        Trace: true
+        accum_t: ap_fixed<32,16>
+      q_dense_1:
+        Precision:
+          bias: ap_fixed<8,1>
+          weight: ap_fixed<8,1>
+        ReuseFactor: 4096
+        Trace: true
+        accum_t: ap_fixed<32,16>
+      q_dense_2:
+        Precision:
+          bias: ap_fixed<8,1>
+          weight: ap_fixed<8,1>
+        ReuseFactor: 4096
+        Trace: true
+        accum_t: ap_fixed<32,16>
+      q_dense_3:
+        Precision:
+          bias: ap_fixed<8,1>
+          weight: ap_fixed<8,1>
+        ReuseFactor: 4096
+        Trace: true
+        accum_t: ap_fixed<32,16>
+      q_dense_4:
+        Precision:
+          bias: ap_fixed<8,1>
+          weight: ap_fixed<8,1>
+        ReuseFactor: 4096
+        Trace: true
+        accum_t: ap_fixed<32,16>
+      q_dense_5:
+        Precision:
+          bias: ap_fixed<8,8>
+          weight: ap_fixed<8,8>
+        ReuseFactor: 4096
+        Trace: true
+        accum_t: ap_fixed<32,16>
+    Model:
+      Precision: ap_fixed<32,16>
+      ReuseFactor: 4096
+      Strategy: Resource
+      FIFO_opt: true
+  IOType: io_stream
+  #KerasModel: !keras_model 'hls/downsampled_skip/train_config_bits_7_frames_5_mels_128_encDims_8_hidDims_64_halfcode_2_fan_64_bn_True_qbatch_False_l1reg_0_m_axi_8_serial_prj/keras_model.h5'
+  OutputDir: hls/downsampled_skip/train_config_bits_7_frames_5_mels_128_encDims_8_hidDims_64_halfcode_2_fan_64_bn_True_qbatch_False_l1reg_0_m_axi_8_serial_prj
+  ProjectName: anomaly_detector
+  Stamp: AdDAc49f
+  XilinxPart: xc7z020clg400-1
