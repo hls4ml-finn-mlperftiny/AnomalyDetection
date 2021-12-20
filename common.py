@@ -170,7 +170,7 @@ def file_to_vector_array(file_name,
     #downsample mel spectrogram
     if downsample:
         n_mels = 32
-        frames = 4
+        frames = 2
         vector_array = numpy.zeros((vector_array_size, n_mels*frames))
         for t in range(frames):
             new_vec = log_mel_spectrogram[:, t: t + vector_array_size].T

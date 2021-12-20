@@ -81,7 +81,8 @@ def list_to_vector_array(file_list,
                          n_fft=1024,
                          hop_length=512,
                          power=2.0,
-                         downsample=False):
+                         downsample=False,
+                         dims = 640):
     """
     convert the file_list to a vector array.
     file_to_vector_array() is iterated, and the output vector array is concatenated.
@@ -97,8 +98,8 @@ def list_to_vector_array(file_list,
         * dataset.shape = (number of feature vectors, dimensions of feature vectors)
     """
     # calculate the number of dimensions
-    dims = n_mels * frames
-    mels = 32
+    # dims = n_mels * frames
+    dims = dims
 
     # iterate file_to_vector_array()
     for idx in tqdm(range(len(file_list)), desc=msg):
@@ -110,10 +111,7 @@ def list_to_vector_array(file_list,
                                                 power=power,
                                                 downsample=downsample)
         if idx == 0:
-            if downsample:
-                dataset = numpy.zeros((vector_array.shape[0] * len(file_list), mels*frames), float)
-            else:
-                dataset = numpy.zeros((vector_array.shape[0] * len(file_list), dims), float)
+            dataset = numpy.zeros((vector_array.shape[0] * len(file_list), dims), float)
         dataset[vector_array.shape[0] * idx: vector_array.shape[0] * (idx + 1), :] = vector_array
     print("Shape of dataset: {}".format(dataset.shape))
     return dataset
@@ -190,9 +188,9 @@ if __name__ == "__main__":
 
         
         # generate dataset
-        train_data_save_load_directory = "./train_time_data/train_data_inputs_{}_frames_{}_hops_{}_fft_{}_mels_{}_power_{}.npy".format(
+        train_data_save_load_directory = "./train_time_data/train_data_inputs_{}_frames_{}_hops_{}_fft_{}_mels_{}_power_{}_downsample_{}.npy".format(
         param["model"]["input_dim"],param["feature"]["frames"], param["feature"]["hop_length"], 
-            param["feature"]["n_fft"], param["feature"]["n_mels"], param["feature"]["power"])
+            param["feature"]["n_fft"], param["feature"]["n_mels"], param["feature"]["power"],param["feature"]["downsample"],)
         
         # if train_data available, load processed data in local directory without reprocessing wav files --saves time--
         if os.path.exists(train_data_save_load_directory):
@@ -209,12 +207,13 @@ if __name__ == "__main__":
                                               n_fft=param["feature"]["n_fft"],
                                               hop_length=param["feature"]["hop_length"],
                                               power=param["feature"]["power"],
-                                              downsample=param["feature"]["downsample"])
+                                              downsample=param["feature"]["downsample"],
+                                              dims = param["model"]["input_dim"])
             #save train_data
             if not os.path.exists('train_time_data'):
                 os.makedirs('./train_time_data')
-            numpy.save(train_data_save_load_directory, train_data)
-            print("Train data saved to {}".format(train_data_save_load_directory))
+            # numpy.save(train_data_save_load_directory, train_data)
+            print("Train *NOT* saved to {}".format(train_data_save_load_directory))
 
         # train model
         print("============== MODEL TRAINING ==============")
@@ -268,7 +267,7 @@ if __name__ == "__main__":
             modelbestcheck,
             stopping,
             reduce_lr,
-            prune_summary,
+            # prune_summary,
         ]
         if param["pruning"]["constant"] or param["pruning"]["decay"]:
             callbacks.append(pruning_callbacks.UpdatePruningStep())
