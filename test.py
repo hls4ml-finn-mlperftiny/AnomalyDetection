@@ -8,9 +8,10 @@
 ########################################################################
 # import default python-library
 ########################################################################
-# import setGPU
+import setGPU
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='3'#removes cuda alert for connecting to gpu
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='3'#jules: removes cuda alert for connecting to gpu
 import glob
 import sys
 ########################################################################
@@ -35,19 +36,19 @@ import keras_model
 # main 01_test.py
 ########################################################################
 if __name__ == "__main__":
-    # check command line args
+
     args = com.command_line_chk()
-    
+    if args.config is None:
+        print("No config was set!")
+        sys.exit(-1)
     # load parameter.yaml
     param = com.yaml_load(args.config)
-    param = param["train"]
 
     # make output result directory
     os.makedirs(param["result_directory"], exist_ok=True)
 
     # load base directory
     dirs = com.select_dirs(param=param)
-    tb = False
 
     # initialize lines in csv for AUC and pAUC
     csv_lines = []
@@ -62,10 +63,11 @@ if __name__ == "__main__":
         # set model path
         model_file = "{model}/model_{machine_type}.h5".format(model=param["model_directory"],
                                                                 machine_type=machine_type)
+
         #check if testing already conducted
         model_result_file = "{result_dir}/result.csv".format(result_dir=param['result_directory'])
         if os.path.exists(model_result_file):
-            if os.stat(model_result_file).st_size != 0:
+            if not os.stat(model_result_file).st_size == 0:
                 continue
 
         # load model file
@@ -102,18 +104,8 @@ if __name__ == "__main__":
                                                     frames=param["feature"]["frames"],
                                                     n_fft=param["feature"]["n_fft"],
                                                     hop_length=param["feature"]["hop_length"],
-                                                    power=param["feature"]["power"],
-                                                    downsample=param["feature"]["downsample"])
+                                                    power=param["feature"]["power"])
                     predictions = model.predict(data)
-                    if (tb):
-                        path_to_wav_file, wav_filename = os.path.split(file_path)
-                        input_dat = os.path.splitext(wav_filename)[0] + "_inputs.dat"
-                        prediction_dat = os.path.splitext(wav_filename)[0] + "_predictions.dat"
-                        path_to_dat_dir = path_to_wav_file + "/../../../../../data/" + machine_type
-                        path_to_input_dat = path_to_dat_dir + "/" + input_dat
-                        path_to_prediction_dat = path_to_dat_dir + "/" + prediction_dat
-                        com.save_dat(data, path_to_input_dat)
-                        com.save_dat(predictions, path_to_prediction_dat)
                     errors = numpy.mean(numpy.square(data - predictions), axis=1)
                     y_pred[file_idx] = numpy.mean(errors)
                     anomaly_score_list.append([os.path.basename(file_path), y_pred[file_idx]])
@@ -141,7 +133,9 @@ if __name__ == "__main__":
         csv_lines.append(["Average"] + list(averaged_performance))
         csv_lines.append([])
 
-    # output results
-    result_path = "{result}/{file_name}".format(result=param["result_directory"], file_name=param["result_file"])
-    com.logger.info("AUC and pAUC results -> {}".format(result_path))
-    com.save_csv(save_file_path=result_path, save_data=csv_lines)
+
+    if csv_lines:
+        # output results
+        result_path = "{result}/{file_name}".format(result=param["result_directory"], file_name=param["result_file"])
+        com.logger.info("AUC and pAUC results -> {}".format(result_path))
+        com.save_csv(save_file_path=result_path, save_data=csv_lines)

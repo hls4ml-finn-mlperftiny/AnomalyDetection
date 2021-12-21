@@ -1,35 +1,20 @@
 import tensorflow as tf
-
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Activation
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.regularizers import l1
-
-from sklearn.datasets import fetch_openml
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-
-from qkeras.qlayers import QDense, QActivation
-from qkeras.quantizers import quantized_bits, quantized_relu
 from qkeras.utils import _add_supported_quantized_objects
-
-import yaml
-import argparse
-import os
 import numpy as np
-from plot_roc import plot_roc
-
-import hls4ml
-
+from sklearn.metrics import accuracy_score
+from sklearn import metrics
+from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
-
-def is_tool(name):
-    from distutils.spawn import find_executable
-    return find_executable(name) is not None
+import numpy
+import hls4ml
+import matplotlib.pyplot as plt
+import os
+import sys
+import common as com
+import keras_model
 
 def print_dict(d, indent=0):
-    align = 20
+    align=20
     for key, value in d.items():
         print('  ' * indent + str(key), end='')
         if isinstance(value, dict):
@@ -38,116 +23,137 @@ def print_dict(d, indent=0):
         else:
             print(':' + ' ' * (20 - len(key) - 2 * indent) + str(value))
 
-def yaml_load(config):
-        with open(config, 'r') as stream:
-            param = yaml.safe_load(stream)
-        return param
-  
-def load_model(file_path):
-    from qkeras.utils import _add_supported_quantized_objects
-    co = {}
-    _add_supported_quantized_objects(co)  
-    return tf.keras.models.load_model(file_path, custom_objects=co)
+# load parameter.yml of HLS CONFIG
+args = com.command_line_chk()
+param = com.yaml_load(args.config)
 
+def is_tool(name):
+    from distutils.spawn import find_executable
+    return find_executable(name) is not None
 
-def main(args):
+print('-----------------------------------')
+if not is_tool('vivado_hls'):
+    print('Xilinx Vivado HLS is NOT in the PATH')
+else:
+    print('Xilinx Vivado HLS is in the PATH')
+print('-----------------------------------')
 
-    convert_config = yaml_load(args.config)
+# AD03
+model_file = param['model_dir']
+board_name = param['board_name']
+acc_name = param['acc_name']
+    
+if not os.path.exists(model_file):
+    print("{} model not found at path ".format(model_file))
+model = keras_model.load_model(model_file)
+model.summary()
 
-    os.environ['PATH'] = convert_config['convert']['vivado_path'] + os.environ['PATH']
-    print('-----------------------------------')
-    if not is_tool('vivado_hls'):
-        print('Xilinx Vivado HLS is NOT in the PATH')
-    else:
-        print('Xilinx Vivado HLS is in the PATH')
-    print('-----------------------------------')
+interface = 'm_axi' # 's_axilite', 'm_axi', 'hls_stream'
+axi_width = 8 # 16, 32, 64
+implementation = 'serial' # 'serial', 'dataflow'
 
-    # test bench data
-    # X_npy = np.load(convert_config['convert']['x_npy_hls_test_bench'], allow_pickle=True)
-    # y_npy =np.load(convert_config['convert']['y_npy_hls_test_bench'], allow_pickle=True)
+#hls4ml.model.optimizer.OutputRoundingSaturationMode.layers = ['Activation']
+#hls4ml.model.optimizer.OutputRoundingSaturationMode.rounding_mode = 'AP_RND'
+#hls4ml.model.optimizer.OutputRoundingSaturationMode.saturation_mode = 'AP_SAT'
 
-    model = load_model(convert_config['convert']['model_file'])
-    model.summary()
+# for AD03+Pynq (original)
+hls_config = param['HLSConfig']
+# for AD04+Arty (new, can work for both)
+#hls_config = hls4ml.utils.config_from_keras_model(model, granularity='name')
+#hls_config['Model']['ReuseFactor'] = param['REUSE']
+#hls_config['Model']['Strategy'] = param['Strategy']
+#hls_config['Model']['Precision'] = param['accum_t']
+#hls_config['LayerName']['input_1']['Precision'] = param['input_precision']
+#for layer in hls_config['LayerName'].keys():
+#    hls_config['LayerName'][layer]['accum_t'] = param['accum_t']
+#    hls_config['LayerName'][layer]['ReuseFactor'] = param['REUSE']
 
+output_dir = param['output_dir']
+backend_config = hls4ml.converters.create_backend_config(fpga_part=param['fpga_part'])
+backend_config['ProjectName'] = acc_name
+backend_config['KerasModel'] = model
+backend_config['HLSConfig'] = hls_config
+backend_config['OutputDir'] = param['output_dir']
+backend_config['Backend'] = param['Backend']
+backend_config['Interface'] = interface
+backend_config['IOType'] = param['IOType']
+backend_config['AxiWidth'] = str(axi_width)
+backend_config['Implementation'] = implementation
+backend_config['ClockPeriod'] = 10
+backend_config['InputData'] = 'input_features.dat'
+backend_config['OutputPredictions'] = 'input_features.dat'
 
-    import hls4ml
+print("-----------------------------------")
+print_dict(backend_config)
+print("-----------------------------------")
 
+# This is under the assumption that 
+# 1. all the machines have the same number of wave files
+# 2. all of the wave files have the same number of frames
+# 3. all of the frames have the same length
 
+X_npy = './test_data/downsampled_128_5_to_32_4_skip_method.npy'
+y_npy = './test_data/downsampled_128_5_to_32_4_ground_truths_skip_method.npy'
 
-    # hls4ml.model.optimizer.OutputRoundingSaturationMode.layers = ['Activation']
-    # hls4ml.model.optimizer.OutputRoundingSaturationMode.rounding_mode = 'AP_RND'
-    # hls4ml.model.optimizer.OutputRoundingSaturationMode.saturation_mode = 'AP_SAT'
-    # hls_config = hls4ml.utils.config_from_keras_model(model, granularity='name')
+#load processed test data
+from sklearn.utils import shuffle
+X = np.load(X_npy, allow_pickle=True)
+y = np.load(y_npy, allow_pickle=True)
+y_keras = []
+#use a quarter of the test_set to save time
+for i in range(len(X)):
+    quarter = int(len(X[i])/4)
+    assert len(X) == len(y)
+    X[i], y[i] = X[i][0:quarter],  y[i][0:quarter]
 
+machine_count=len(X)
+wav_count=len(X[0])
+frame_count=len(X[0][0])
+frame_length=len(X[0][0][0])
 
+print('Machine count: {}'.format(machine_count))
+print('Wave count: {}'.format(wav_count))
+print('Frame count: {}'.format(frame_count))
+print('Frame length: {}'.format(frame_length))
 
+# Save the first N frames of the first wave file of the first machine
+N=1
+f = open('input_features.dat', 'w')
+for j in range(N):
+    for k in range(frame_length):
+        f.write('{} '.format(X[0][0][j][k]))
+    f.write('\n')
+f.close()
 
-    backend=convert_config['convert']['Backend'], 
-    clock_period=convert_config['convert']['ClockPeriod'],
-    io_type=convert_config['convert']['IOType'], 
-    interface=convert_config['convert']['Interface'], 
-    if convert_config['convert']['Backend'] == 'VivadoAccelerator':
-        board = convert_config['convert']['Board']
-        driver = convert_config['convert']['Driver']
-        cfg = hls4ml.converters.create_config(
-            backend=convert_config['convert']['Backend'], 
-            board=convert_config['convert']['Board'], 
-            interface=convert_config['convert']['Interface'], 
-            clock_period=convert_config['convert']['ClockPeriod'],
-            io_type=convert_config['convert']['IOType'], 
-            driver=convert_config['convert']['Driver'])
-    else:
-        part = convert_config['convert']['fpga_part']
-        cfg = hls4ml.converters.create_config(
-            backend=convert_config['convert']['Backend'], 
-            part=convert_config['convert']['fpga_part'],
-            clock_period=convert_config['convert']['ClockPeriod'],
-            io_type=convert_config['convert']['IOType'],)
+y_pred = model.predict(X[0][0][0:N].reshape((N,128)))
 
-    cfg['HLSConfig'] = convert_config['hls_config']['HLSConfig']
-    cfg['InputData'] = convert_config['convert']['x_npy_hls_test_bench']
-    cfg['OutputPredictions'] = convert_config['convert']['x_npy_hls_test_bench']
-    cfg['KerasModel'] = model
-    cfg['OutputDir'] = convert_config['convert']['OutputDir']
+f = open('output_predictions.dat', 'w')
+for j in range(N):
+    for k in range(frame_length):
+        f.write('{} '.format(y_pred[j][k]))
+    f.write('\n')
+f.close()
 
-    print("-----------------------------------")
-    print_dict(cfg)
-    print("-----------------------------------")
+hls_model = hls4ml.converters.keras_to_hls(backend_config)
+_ = hls_model.compile()
 
-    # profiling / testing
-    # profiling / testing
-    hls_model = hls4ml.converters.keras_to_hls(cfg)
-    if not os.path.exists(convert_config['convert']['OutputDir']):
-        os.makedirs(convert_config['convert']['OutputDir'])
-    hls4ml.utils.plot_model(hls_model, show_shapes=True, show_precision=True, to_file='{}/model_hls4ml.png'.format(convert_config['convert']['OutputDir']))
-    hls_model.compile()
-    plot_roc(model, hls_model, convert_config['convert']['x_npy_plot_roc'], convert_config['convert']['y_npy_plot_roc'], convert_config['convert']['OutputDir'])
+y_hls = hls_model.predict(X[0][0][0:N].reshape((N,128)))
+print('model     :', y_pred)
+print('hls_model :', y_hls)
 
+# to be updated to work automatically later
+#hls_model.build(csim=False,synth=True,export=True,cosim=False,validation=False)
 
+# perform synth
+os.system('/bin/bash -c "cp ../inference/hls/patches/anomaly_detector_axi.* {output_dir}/firmware/"'.format(output_dir=output_dir))
+os.system('/bin/bash -c "cp ../inference/hls/patches/anomaly_detector_test.cpp {output_dir}/"'.format(output_dir=output_dir))
+os.system('/bin/bash -c "cd {output_dir} && vivado_hls -f build_prj.tcl csim=1 synth=1 export=1 cosim=0 validation=0"'.format(output_dir=output_dir))
 
-     # Bitfile time
-    if bool(convert_config['convert']['Build']):
-        if bool(convert_config['convert']['FIFO_opt']):
-            from hls4ml.model.profiling import optimize_fifos_depth
-            hls_model = optimize_fifos_depth(model, output_dir=convert_config['convert']['OutputDir'],
-                                             clock_period=convert_config['convert']['ClockPeriod'],
-                                             backend=convert_config['convert']['Backend'],
-                                             input_data_tb=os.path.join(convert_config['convert']['x_npy_hls_test_bench']),
-                                             output_data_tb=os.path.join(convert_config['convert']['x_npy_hls_test_bench']),
-                                             board=convert_config['convert']['Board'], hls_config=convert_config['hls_config']['HLSConfig'])
-        else:
-            hls_model.build(reset=False, csim=True, cosim=True, validation=True, synth=True, vsynth=True, export=True)
-            hls4ml.report.read_vivado_report(convert_config['convert']['OutputDir'])
-        if convert_config['convert']['Backend'] == 'VivadoAccelerator':
-            hls4ml.templates.VivadoAcceleratorBackend.make_bitfile(hls_model)
+# perform CSIM on written test bench
+os.system('/bin/bash -c "cd ../inference/sys/{board_name} && make clean sys ACC={acc_name} INTERFACE={interface}"'.format(board_name=board_name,acc_name=acc_name,interface=interface))
 
-    hls_model.build(csim=False, synth=True, export=True)
-    hls4ml.templates.VivadoAcceleratorBackend.make_bitfile(hls_model)
+#perform IP integration of synthesized HLS
+os.system('/bin/bash -c "cd ../inference/sdk/{board_name} && make clean sdk-harness ACC={acc_name} SAMPLE_COUNT=10"'.format(board_name=board_name,acc_name=acc_name))
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default="baseline.yml", help="specify yaml config")
-
-    args = parser.parse_args()
-
-    main(args)
+#write SDK project and flash to board
+os.system('/bin/bash -c "cd ../inference/sdk/{board_name} && make gui"'.format(board_name=board_name))
