@@ -59,13 +59,8 @@ __versions__ = "1.0.0"
 ########################################################################
 def command_line_chk():
     parser = argparse.ArgumentParser(description='Without option argument, it will not run properly.')
-    parser.add_argument('-v', '--version', action='store_true', help="show application version")
-    parser.add_argument('-c', '--config', type=str, default = "baseline.yml", help="specify yml config")
+    parser.add_argument('-c', '--config', type=str, help="specify yml config")
     args = parser.parse_args()
-    if args.version:
-        print("===============================")
-        print("HLS4ML TOYADMOS ANOMALY DETECTION\nversion {}".format(__versions__))
-        print("===============================\n")
     return args
 ########################################################################
 
@@ -124,8 +119,7 @@ def file_to_vector_array(file_name,
                          frames=5,
                          n_fft=1024,
                          hop_length=512,
-                         power=2.0,
-                         downsample=True):
+                         power=2.0):
     """
     convert file_name to a vector array.
 
@@ -148,7 +142,10 @@ def file_to_vector_array(file_name,
                                                      hop_length=hop_length,
                                                      n_mels=n_mels,
                                                      power=power)
+    numpy.shape(mel_spectrogram)
     mel_spectrogram = mel_spectrogram[:,50:250]
+    numpy.shape(mel_spectrogram)
+    
 
 
     # 03 convert melspectrogram to log mel energy
@@ -166,21 +163,17 @@ def file_to_vector_array(file_name,
         return numpy.empty((0, dims))
 
     # 06 generate feature vectors by concatenating multiframes
-    
-    #downsample mel spectrogram
-    if downsample:
-        n_mels = 32
-        frames = 4
-        vector_array = numpy.zeros((vector_array_size, n_mels*frames))
-        for t in range(frames):
-            new_vec = log_mel_spectrogram[:, t: t + vector_array_size].T
-            vector_array[:, n_mels * t: n_mels * (t + 1)] = new_vec[:,::4]
-        return vector_array
-    else:
-        vector_array = numpy.zeros((vector_array_size, dims))
-        for t in range(frames):
-            vector_array[:, n_mels * t: n_mels * (t + 1)] = log_mel_spectrogram[:, t: t + vector_array_size].T
-        return vector_array
+    #vector_array = numpy.zeros((vector_array_size, dims))
+    vector_array = numpy.zeros((vector_array_size, 32*2))
+    new_mels = 32
+    new_frames = 2
+
+    #skip method
+    for t in range(new_frames):
+        new_vec = log_mel_spectrogram[:, t: t + vector_array_size].T
+        vector_array[:, new_mels * t: new_mels * (t + 1)] = new_vec[:,::4]
+    return vector_array
+
 
 # load dataset
 def select_dirs(param):
@@ -189,12 +182,18 @@ def select_dirs(param):
         baseline.yaml data
 
     return :
-        dirs :  list [ str ]
-            load base directory list of dev_data
+        if active type the development :
+            dirs :  list [ str ]
+                load base directory list of dev_data
+        if active type the evaluation :
+            dirs : list [ str ]
+                load base directory list of eval_data
     """
+
     logger.info("load_directory <- development")
     dir_path = os.path.abspath("{base}/*".format(base=param["dev_directory"]))
     dirs = sorted(glob.glob(dir_path))
+
     return dirs
 
 ########################################################################
@@ -251,9 +250,7 @@ def test_file_list_generator(target_dir,
             test_labels : list [ boolean ]
                 label info. list for test
                 * normal/anomaly = 0/1
-        if the mode is "evaluation":
-            test_files : list [ str ]
-                file list for test
+ 
     """
     logger.info("target_dir : {}".format(target_dir+"_"+id_name))
 
@@ -288,8 +285,7 @@ def list_to_vector_array(file_list,
                          frames=5,
                          n_fft=1024,
                          hop_length=512,
-                         power=2.0,
-                         downsample=False):
+                         power=2.0):
     """
     convert the file_list to a vector array.
     file_to_vector_array() is iterated, and the output vector array is concatenated.
@@ -314,8 +310,7 @@ def list_to_vector_array(file_list,
                                                 frames=frames,
                                                 n_fft=n_fft,
                                                 hop_length=hop_length,
-                                                power=power,
-                                                downsample=downsample)
+                                                power=power)
         if idx == 0:
             dataset = numpy.zeros((vector_array.shape[0] * len(file_list), dims), float)
         dataset[vector_array.shape[0] * idx: vector_array.shape[0] * (idx + 1), :] = vector_array
