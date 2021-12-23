@@ -106,7 +106,7 @@ def list_to_vector_array(file_list,
                                                 hop_length=hop_length,
                                                 power=power)
         if idx == 0:
-            dataset = numpy.zeros((vector_array.shape[0] * len(file_list), 64), float)
+            dataset = numpy.zeros((vector_array.shape[0] * len(file_list), param["model"]["new_Mels_bins"] *  param["model"]["new_Frames"]), float)
         dataset[vector_array.shape[0] * idx: vector_array.shape[0] * (idx + 1), :] = vector_array
     print("Shape of dataset: {}".format(dataset.shape))
     return dataset
@@ -209,7 +209,7 @@ if __name__ == "__main__":
             model = qmodel.get_model()
         else:
             model = keras_model.get_model(param["model"]["name"], 
-                                        2*32,
+                                        param["model"]["new_Mels_bins"] *  param["model"]["new_Frames"],
                                         hiddenDim=param["model"]["hidden_dim"], 
                                         encodeDim=param["model"]["encode_dim"], 
                                         halfcode_layers=param["model"]["halfcode_layers"],
