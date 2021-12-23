@@ -18,6 +18,8 @@ fit:
   verbose: 1
 max_fpr: 0.1
 model:
+  new_Mels_bins: 32
+  new_Frames: 5
   batch_norm: true
   encode_dim: 8
   hidden_dim: 128
