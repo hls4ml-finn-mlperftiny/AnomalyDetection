@@ -345,7 +345,7 @@ if __name__ == "__main__":
             "Conv2D": [4, 8, 4],
             "DepthwiseConv2D": [4, 8, 4],
             "Activation": [['quantized_relu', 'quantized_tanh', 'binary_tanh', 'ternary_tanh', 'quantized_bits', 'binary', 'ternary'], 4],
-            "BatchNormalization": []
+#             "BatchNormalization": [] Commented out to avoid qBatchnorm layers which are not supported by hls4ml
             
         }
         goal = {
@@ -376,7 +376,7 @@ if __name__ == "__main__":
           "seed": 42,
           "limit": limit,
           "tune_filters": "layer",
-          "tune_filters_exceptions": "dense_9*",
+          "tune_filters_exceptions": "^dense",
           "distribution_strategy": cur_strategy,
           # first layer is input, layer two layers are softmax and flatten
           "layer_indexes": range(1, len(model.layers) - 1),
@@ -423,7 +423,6 @@ if __name__ == "__main__":
                              callbacks=autoqCallbacks)
                             
         qmodel = autoqk.get_best_model()
-        qmodel.save('./model/ad03/qmodel.h5')
 
         with cur_strategy.scope():
           qmodel.compile(**param["fit"]["compile"])
