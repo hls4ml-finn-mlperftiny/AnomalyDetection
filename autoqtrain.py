@@ -120,7 +120,7 @@ def list_to_vector_array(file_list,
                                                 hop_length=hop_length,
                                                 power=power)
         if idx == 0:
-            dataset = numpy.zeros((vector_array.shape[0] * len(file_list), 128), float)
+            dataset = numpy.zeros((vector_array.shape[0] * len(file_list), param["model"]["new_Mels_bins"] *  param["model"]["new_Frames"]), float)
         dataset[vector_array.shape[0] * idx: vector_array.shape[0] * (idx + 1), :] = vector_array
     print("Shape of dataset: {}".format(dataset.shape))
     return dataset
@@ -217,7 +217,7 @@ if __name__ == "__main__":
         print("============== MODEL TRAINING ==============")
         if param["model"]["name"] == 'qkeras_model':
             model = keras_model.get_model(param["model"]["name"], 
-                                          2*32,
+                                           param["model"]["new_Mels_bins"] *  param["model"]["new_Frames"],
                                           hiddenDim=param["model"]["hidden_dim"],
                                           encodeDim=param["model"]["encode_dim"],
                                           bits=param["model"]["quantization"]["bits"],
@@ -232,7 +232,7 @@ if __name__ == "__main__":
                                           fan_in_out=param["model"]["fan_in_out"])
         else:
             model = keras_model.get_model(param["model"]["name"],
-                                        2*32,
+                                         param["model"]["new_Mels_bins"] *  param["model"]["new_Frames"],
                                         hiddenDim=param["model"]["hidden_dim"],
                                         encodeDim=param["model"]["encode_dim"],
                                         halfcode_layers=param["model"]["halfcode_layers"],
@@ -324,7 +324,6 @@ if __name__ == "__main__":
                 "activation": {
                         "binary": 1,
                         "ternary": 2,
-                        "quantized_relu_po2(4,4)": 4,
                         "quantized_relu(3,1)": 3,
                         "quantized_relu(4,2)": 4,
                         "quantized_relu(8,2)": 8,
