@@ -125,7 +125,8 @@ def file_to_vector_array(file_name,
                          n_fft=1024,
                          hop_length=512,
                          power=2.0,
-                         downsample=True):
+                         downsample=True,
+                         input_dim = 640):
     """
     convert file_name to a vector array.
 
@@ -169,12 +170,13 @@ def file_to_vector_array(file_name,
     
     #downsample mel spectrogram
     if downsample:
-        n_mels = 32
+        n_mels = 64
         frames = 2
+    
         vector_array = numpy.zeros((vector_array_size, n_mels*frames))
         for t in range(frames):
             new_vec = log_mel_spectrogram[:, t: t + vector_array_size].T
-            vector_array[:, n_mels * t: n_mels * (t + 1)] = new_vec[:,::4]
+            vector_array[:, n_mels * t: n_mels * (t + 1)] = new_vec[:,::2]
         return vector_array
     else:
         vector_array = numpy.zeros((vector_array_size, dims))
