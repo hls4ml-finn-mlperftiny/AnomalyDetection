@@ -164,8 +164,8 @@ def file_to_vector_array(file_name,
 
     # 06 generate feature vectors by concatenating multiframes
     #vector_array = numpy.zeros((vector_array_size, dims))
-    new_mels =  param["model"]["new_Mels_bins"]
-    new_frames =  param["model"]["new_Frames"]
+    new_mels =  32
+    new_frames =  4
     vector_array = numpy.zeros((vector_array_size, new_mels * new_frames))
 
     #skip method
