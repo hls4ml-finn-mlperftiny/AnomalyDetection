@@ -1,19 +1,4 @@
 import tensorflow as tf
-
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Activation
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.regularizers import l1
-
-from sklearn.datasets import fetch_openml
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-
-from qkeras.qlayers import QDense, QActivation
-from qkeras.quantizers import quantized_bits, quantized_relu
-from qkeras.utils import _add_supported_quantized_objects
-
 import yaml
 import argparse
 import os
@@ -82,67 +67,25 @@ def main(args):
 
 
 
-    backend=convert_config['convert']['Backend'], 
-    clock_period=convert_config['convert']['ClockPeriod'],
-    io_type=convert_config['convert']['IOType'], 
-    interface=convert_config['convert']['Interface'], 
-    if convert_config['convert']['Backend'] == 'VivadoAccelerator':
-        board = convert_config['convert']['Board']
-        driver = convert_config['convert']['Driver']
-        cfg = hls4ml.converters.create_config(
-            backend=convert_config['convert']['Backend'], 
-            board=convert_config['convert']['Board'], 
-            interface=convert_config['convert']['Interface'], 
-            clock_period=convert_config['convert']['ClockPeriod'],
-            io_type=convert_config['convert']['IOType'], 
-            driver=convert_config['convert']['Driver'])
-    else:
-        part = convert_config['convert']['fpga_part']
-        cfg = hls4ml.converters.create_config(
-            backend=convert_config['convert']['Backend'], 
-            part=convert_config['convert']['fpga_part'],
-            clock_period=convert_config['convert']['ClockPeriod'],
-            io_type=convert_config['convert']['IOType'],)
-
-    cfg['HLSConfig'] = convert_config['hls_config']['HLSConfig']
-    cfg['InputData'] = convert_config['convert']['x_npy_hls_test_bench']
-    cfg['OutputPredictions'] = convert_config['convert']['x_npy_hls_test_bench']
-    cfg['KerasModel'] = model
-    cfg['OutputDir'] = convert_config['convert']['OutputDir']
-
-    print("-----------------------------------")
-    print_dict(cfg)
-    print("-----------------------------------")
-
-    # profiling / testing
-    # profiling / testing
-    hls_model = hls4ml.converters.keras_to_hls(cfg)
-    if not os.path.exists(convert_config['convert']['OutputDir']):
-        os.makedirs(convert_config['convert']['OutputDir'])
-    hls4ml.utils.plot_model(hls_model, show_shapes=True, show_precision=True, to_file='{}/model_hls4ml.png'.format(convert_config['convert']['OutputDir']))
-    hls_model.compile()
-    plot_roc(model, hls_model, convert_config['convert']['x_npy_plot_roc'], convert_config['convert']['y_npy_plot_roc'], convert_config['convert']['OutputDir'])
+ 
+interface = 'm_axi' # 's_axilite', 'm_axi', 'hls_stream'
+axi_width = 16 # 16, 32, 64
+implementation = 'serial' # 'serial', 'dataflow'
+output_dir='hls/autoretest/' + board_name + '_' + interface + '_' + str(axi_width) + '_' + implementation + '_prj' 
+hls_model = hls4ml.converters.convert_from_keras_model(model,
+                                                       output_dir=output_dir,
+                                                       project_name='anomaly_detector',
+                                                       fpga_part=fpga_part,
+                                                       clock_period=10,
+                                                       io_type='io_parallel',
+                                                       hls_config=hls_config,
+                                                       backend='Pynq',)
 
 
+_ = hls_model.compile()
+hls_model.build(csim=False,synth=True,vsynth=True,export=True)
 
-     # Bitfile time
-    if bool(convert_config['convert']['Build']):
-        if bool(convert_config['convert']['FIFO_opt']):
-            from hls4ml.model.profiling import optimize_fifos_depth
-            hls_model = optimize_fifos_depth(model, output_dir=convert_config['convert']['OutputDir'],
-                                             clock_period=convert_config['convert']['ClockPeriod'],
-                                             backend=convert_config['convert']['Backend'],
-                                             input_data_tb=os.path.join(convert_config['convert']['x_npy_hls_test_bench']),
-                                             output_data_tb=os.path.join(convert_config['convert']['x_npy_hls_test_bench']),
-                                             board=convert_config['convert']['Board'], hls_config=convert_config['hls_config']['HLSConfig'])
-        else:
-            hls_model.build(reset=False, csim=True, cosim=True, validation=True, synth=True, vsynth=True, export=True)
-            hls4ml.report.read_vivado_report(convert_config['convert']['OutputDir'])
-        if convert_config['convert']['Backend'] == 'VivadoAccelerator':
-            hls4ml.templates.VivadoAcceleratorBackend.make_bitfile(hls_model)
-
-    hls_model.build(csim=False, synth=True, export=True)
-    hls4ml.templates.VivadoAcceleratorBackend.make_bitfile(hls_model)
+hls4ml.report.read_vivado_report(output_dir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
