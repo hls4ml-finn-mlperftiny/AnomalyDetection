@@ -98,7 +98,6 @@ def list_to_vector_array(file_list,
     """
     # calculate the number of dimensions
     dims = n_mels * frames
-    mels = 32
 
     # iterate file_to_vector_array()
     for idx in tqdm(range(len(file_list)), desc=msg):
@@ -111,6 +110,8 @@ def list_to_vector_array(file_list,
                                                 downsample=downsample)
         if idx == 0:
             if downsample:
+                mels = 32
+                frames = 4
                 dataset = numpy.zeros((vector_array.shape[0] * len(file_list), mels*frames), float)
             else:
                 dataset = numpy.zeros((vector_array.shape[0] * len(file_list), dims), float)
