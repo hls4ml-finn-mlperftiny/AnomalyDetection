@@ -41,8 +41,22 @@ conda activate ML-train-env
 ## Train model
 The training script `train.py` takes one argument, which is `-c` or `--config` which accepts a `.yml` model configuration file. If none is selected, a default `baseline.yml`' file in the working directory will be selected.
 
+e.g.:
+```
+python train.py -c ad03.yml
+```
+
 ## Test model
 After a model has been trained, the test script works similarly to the training script. Argument is `.yml` config file, default is again a  `baseline.yml` file in the working directory.
 
+e.g.:
+```
+python test.py -c ad03.yml
+```
+
 ## Convert model
 - `python convert.py -c <model_config>.yml`, a default `baseline.yml` config file is provided as well.
+- e.g.:
+```
+python convert.py -c ad03.yml
+```
