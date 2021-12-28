@@ -24,7 +24,7 @@ Run through the following commands to instantiate the training environment
 
 ```
 # Download the training dataset 
-v_1/get_dataset.sh
+./get_dataset.sh
 
 # Download conda env if you don't already have it
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -35,7 +35,7 @@ bash Miniconda3-latest-Linux-x86_64.sh
 
 conda init bash
 conda env create -f environment.yml
-conda activate ML-train-env
+conda activate tiny-mlperf-env
 
 ```
 ## Train model
