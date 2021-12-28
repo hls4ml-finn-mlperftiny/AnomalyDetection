@@ -56,7 +56,8 @@ python test.py -c ad03.yml
 
 ## Convert model
 - `python convert.py -c <model_config>.yml`, a default `baseline.yml` config file is provided as well.
-- if you want to create/use a test bench during conversion, you can first run: ```
+- if you want to create/use a test bench during conversion, you can first run: 
+```
 python generate_test_data.py -c ad03.yml
 ```
 - 
