@@ -23,18 +23,18 @@ train:
       latent_dim: 8
       hidden_dim: 128
       l1reg: 0
-      name: keras_model
+      name: qkeras_model
       encode_depth: 1
-      encode_in: 128
-      decode_depth: 4
-      decode_out: 128
+      encode_in: 64
+      decode_depth: 1
+      decode_out: 64
       quantization:
-          bits: mixed
-          int_bits: mixed
-          last_bits: mixed
-          last_int_bits: mixed
-          relu_bits: mixed
-          relu_int_bits: mixed
+          bits: 10
+          int_bits: 0
+          last_bits: 10
+          last_int_bits: 10
+          relu_bits: 5
+          relu_int_bits: 5
   pruning:
       constant: false
       decay: false
@@ -54,22 +54,18 @@ convert:
   y_npy_hls_test_bench: ./test_data/anomaly_detection/test_bench/downsampled_128_5_to_32_4_ground_truths_skip_method.npy
   model_file: model/model_config/ad03/model_ToyCar.h5
   Build: True
-  FIFO_opt: False
-  OutputDir: hls/results/config/ad03/
+  OutputDir: hls/results/config/ad03_fifo_opt
   ClockPeriod: 10
   vivado_path: "/tools/Xilinx/Vivado/2019.1/bin:"
   Board: pynq-z2
   Trace: 0
   fpga_part: xc7z020clg400-1
   acc_name: anomaly_detection
-  Backend: Vivado
+  Backend: VivadoAccelerator
   IOType: io_stream
   Interface: axi_stream
   Driver: python
   Strategy: Resource
-hls_config:
-  Backend: Vivado
-  ClockPeriod: 10
   HLSConfig:
     LayerName:
       batch_normalization:
@@ -91,86 +87,50 @@ hls_config:
           scale: ap_fixed<16,6>
         ReuseFactor: 4096
         Trace: true
-      batch_normalization_3:
-        Precision:
-          bias: ap_fixed<16,6>
-          scale: ap_fixed<16,6>
-        ReuseFactor: 4096
-        Trace: true
-      batch_normalization_4:
-        Precision:
-          bias: ap_fixed<16,6>
-          scale: ap_fixed<16,6>
-        ReuseFactor: 4096
-        Trace: true
       input_1:
         Precision: ap_fixed<8,8>
         Trace: true
       q_activation:
         Precision:
-          result: ap_fixed<8,4>
+          result: ap_fixed<11,6>
         ReuseFactor: 4096
         Trace: true
         accum_t: ap_fixed<32,16>
       q_activation_1:
         Precision:
-          result: ap_fixed<8,4>
+          result: ap_fixed<11,6>
         ReuseFactor: 4096
         Trace: true
       q_activation_2:
         Precision:
-          result: ap_fixed<8,4>
-        ReuseFactor: 4096
-        Trace: true
-      q_activation_3:
-        Precision:
-          result: ap_fixed<8,4>
-        ReuseFactor: 4096
-        Trace: true
-      q_activation_4:
-        Precision:
-          result: ap_fixed<8,4>
+          result: ap_fixed<11,6>
         ReuseFactor: 4096
         Trace: true
       q_dense:
         Precision:
-          bias: ap_fixed<8,1>
-          weight: ap_fixed<8,1>
+          bias: ap_fixed<11,1>
+          weight: ap_fixed<11,1>
         ReuseFactor: 4096
         Trace: true
         accum_t: ap_fixed<32,16>
       q_dense_1:
         Precision:
-          bias: ap_fixed<8,1>
-          weight: ap_fixed<8,1>
+          bias: ap_fixed<11,1>
+          weight: ap_fixed<11,1>
         ReuseFactor: 4096
         Trace: true
         accum_t: ap_fixed<32,16>
       q_dense_2:
         Precision:
-          bias: ap_fixed<8,1>
-          weight: ap_fixed<8,1>
+          bias: ap_fixed<11,1>
+          weight: ap_fixed<11,1>
         ReuseFactor: 4096
         Trace: true
         accum_t: ap_fixed<32,16>
       q_dense_3:
         Precision:
-          bias: ap_fixed<8,1>
-          weight: ap_fixed<8,1>
-        ReuseFactor: 4096
-        Trace: true
-        accum_t: ap_fixed<32,16>
-      q_dense_4:
-        Precision:
-          bias: ap_fixed<8,1>
-          weight: ap_fixed<8,1>
-        ReuseFactor: 4096
-        Trace: true
-        accum_t: ap_fixed<32,16>
-      q_dense_5:
-        Precision:
-          bias: ap_fixed<8,8>
-          weight: ap_fixed<8,8>
+          bias: ap_fixed<11,11>
+          weight: ap_fixed<11,11>
         ReuseFactor: 4096
         Trace: true
         accum_t: ap_fixed<32,16>
@@ -178,10 +138,4 @@ hls_config:
       Precision: ap_fixed<32,16>
       ReuseFactor: 4096
       Strategy: Resource
-      FIFO_opt: true
-  IOType: io_stream
-  #KerasModel: !keras_model 'hls/downsampled_skip/train_config_bits_7_frames_5_mels_128_encDims_8_hidDims_64_halfcode_2_fan_64_bn_True_qbatch_False_l1reg_0_m_axi_8_serial_prj/keras_model.h5'
-  OutputDir: hls/ad03_axi_stream_prj
-  ProjectName: anomaly_detector
-  Stamp: AdDAc49f
-  XilinxPart: xc7z020clg400-1
+      FIFO_opt: True

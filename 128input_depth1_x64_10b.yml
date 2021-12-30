@@ -1,0 +1,49 @@
+train:
+  dev_directory: ./dev_data
+  feature:
+      frames: 5
+      hop_length: 512
+      n_fft: 1024
+      n_mels: 128
+      power: 2.0
+      downsample: True
+  fit:
+      batch_size: 512
+      compile:
+        loss: mean_squared_error
+        optimizer: adam
+      epochs: 100
+      shuffle: true
+      validation_split: 0.1
+      verbose: 1
+  max_fpr: 0.1
+  model:
+      input_dim: 128
+      batch_norm: true
+      latent_dim: 8
+      hidden_dim: 64
+      l1reg: 0
+      name: qkeras_model
+      encode_depth: 1
+      encode_in: 64
+      decode_depth: 1
+      decode_out: 64
+      quantization:
+          bits: 10
+          int_bits: 0
+          last_bits: 10
+          last_int_bits: 8
+          relu_bits: 5
+          relu_int_bits: 5
+  pruning:
+      constant: false
+      decay: false
+      final_step: None
+      initial_step: 0
+      power: None
+      sparsity: None
+      initial_sparsity: None
+      final_sparsity: None
+  model_directory: ./model/model_config/128input_depth1_x64_10b
+  result_directory: ./result/test/model_config/128input_depth1_x64_10b
+  result_file: result.csv

@@ -47,6 +47,8 @@ def main(args):
         os.makedirs('test_data/anomaly_detection/')
     np.save(convert['x_npy_plot_roc'],X)
     np.save(convert['y_npy_plot_roc'],y)
+    np.save(convert['x_npy_test_bench'],X[0][0][0:10])
+    np.save(convert['y_npy_test_bench'],y[0][0:10])
 
                     
                     
