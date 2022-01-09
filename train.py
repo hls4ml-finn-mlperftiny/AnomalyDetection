@@ -81,7 +81,8 @@ def list_to_vector_array(file_list,
                          n_fft=1024,
                          hop_length=512,
                          power=2.0,
-                         downsample=False):
+                         downsample=False,
+                         dims=640):
     """
     convert the file_list to a vector array.
     file_to_vector_array() is iterated, and the output vector array is concatenated.
@@ -108,7 +109,8 @@ def list_to_vector_array(file_list,
                                                 n_fft=n_fft,
                                                 hop_length=hop_length,
                                                 power=power,
-                                                downsample=downsample)
+                                                downsample=downsample,
+                                                input_dim=dims)
         if idx == 0:
             if downsample:
                 dataset = numpy.zeros((vector_array.shape[0] * len(file_list), mels*frames), float)
@@ -209,7 +211,8 @@ if __name__ == "__main__":
                                               n_fft=param["feature"]["n_fft"],
                                               hop_length=param["feature"]["hop_length"],
                                               power=param["feature"]["power"],
-                                              downsample=param["feature"]["downsample"])
+                                              downsample=param["feature"]["downsample"],
+                                              dims = param["model"]["input_dim"])
             #save train_data
             if not os.path.exists('train_time_data'):
                 os.makedirs('./train_time_data')
@@ -268,7 +271,7 @@ if __name__ == "__main__":
             modelbestcheck,
             stopping,
             reduce_lr,
-            prune_summary,
+            # prune_summary,
         ]
         if param["pruning"]["constant"] or param["pruning"]["decay"]:
             callbacks.append(pruning_callbacks.UpdatePruningStep())
