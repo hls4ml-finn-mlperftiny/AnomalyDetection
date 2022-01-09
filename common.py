@@ -170,13 +170,16 @@ def file_to_vector_array(file_name,
     
     #downsample mel spectrogram
     if downsample:
-        n_mels = 64
-        frames = 2
-    
-        vector_array = numpy.zeros((vector_array_size, n_mels*frames))
-        for t in range(frames):
+        new_mels = 32
+        new_frames = int(input_dim/new_mels)
+        increment = int(n_mels / new_mels) #value by which to sample the full 640. 
+        offset = n_mels - new_mels*increment #ensures we sample something that is within the expected size
+        assert(input_dim % new_mels == 0)
+
+        vector_array = numpy.zeros((vector_array_size, new_mels*new_frames))
+        for t in range(new_frames):
             new_vec = log_mel_spectrogram[:, t: t + vector_array_size].T
-            vector_array[:, n_mels * t: n_mels * (t + 1)] = new_vec[:,::2]
+            vector_array[:, new_mels * t: new_mels * (t + 1)] = new_vec[:,offset::increment]
         return vector_array
     else:
         vector_array = numpy.zeros((vector_array_size, dims))

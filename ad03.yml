@@ -179,9 +179,3 @@ hls_config:
       ReuseFactor: 4096
       Strategy: Resource
       FIFO_opt: true
-  IOType: io_stream
-  #KerasModel: !keras_model 'hls/downsampled_skip/train_config_bits_7_frames_5_mels_128_encDims_8_hidDims_64_halfcode_2_fan_64_bn_True_qbatch_False_l1reg_0_m_axi_8_serial_prj/keras_model.h5'
-  OutputDir: hls/ad03_axi_stream_prj
-  ProjectName: anomaly_detector
-  Stamp: AdDAc49f
-  XilinxPart: xc7z020clg400-1

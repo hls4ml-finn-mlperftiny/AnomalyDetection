@@ -37,16 +37,19 @@ def main(args):
                                             n_fft=param["feature"]["n_fft"],
                                             hop_length=param["feature"]["hop_length"],
                                             power=param["feature"]["power"],
-                                            downsample=param["feature"]["downsample"])
+                                            downsample=param["feature"]["downsample"],
+                                            input_dim=param["model"]["input_dim"])
             X_machine_data.append(data)
         X.append(X_machine_data)
         y.append(y_true)
     
     #save test_data
-    if not os.path.exists('test_data/anomaly_detection/'):
-        os.makedirs('test_data/anomaly_detection/')
+    if not os.path.exists('test_data/anomaly_detection/test_bench/'):
+        os.makedirs('test_data/anomaly_detection/test_bench/')
     np.save(convert['x_npy_plot_roc'],X)
     np.save(convert['y_npy_plot_roc'],y)
+    np.save(convert['x_npy_hls_test_bench'],X[0][0][0:10])
+    np.save(convert['y_npy_hls_test_bench'],y[0][0:10])
 
                     
                     

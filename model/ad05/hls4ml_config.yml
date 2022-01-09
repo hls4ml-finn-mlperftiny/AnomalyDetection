@@ -1,0 +1,118 @@
+HLSConfig:
+  LayerName:
+    batch_normalization:
+      Precision:
+        bias: ap_fixed<13,8>
+        scale: ap_fixed<13,6>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    batch_normalization_1:
+      Precision:
+        bias: ap_fixed<16,6>
+        scale: ap_fixed<16,6>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<27,16>
+    batch_normalization_2:
+      Precision:
+        bias: ap_fixed<10,6>
+        scale: ap_fixed<10,6>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    batch_normalization_3:
+      Precision:
+        bias: ap_fixed<16,6>
+        scale: ap_fixed<16,6>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    batch_normalization_4:
+      Precision:
+        bias: ap_fixed<12,6>
+        scale: ap_fixed<12,6>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    input_1:
+      Precision: ap_fixed<8,8>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    q_activation:
+      Precision:
+        result: ap_fixed<7,7>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<28,16>
+    q_activation_1:
+      Precision:
+        result: ap_fixed<8,8>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    q_activation_2:
+      Precision:
+        result: ap_fixed<7,7>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    q_activation_3:
+      Precision:
+        result: ap_fixed<7,7>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    q_activation_4:
+      Precision:
+        result: ap_fixed<7,7>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    q_dense:
+      Precision:
+        bias: ap_fixed<13,1>
+        weight: ap_fixed<13,1>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<27,16>
+    q_dense_1:
+      Precision:
+        bias: ap_fixed<13,1>
+        weight: ap_fixed<13,1>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    q_dense_2:
+      Precision:
+        bias: ap_fixed<13,1>
+        weight: ap_fixed<13,1>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    q_dense_3:
+      Precision:
+        bias: ap_fixed<13,1>
+        weight: ap_fixed<13,1>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    q_dense_4:
+      Precision:
+        bias: ap_fixed<13,1>
+        weight: ap_fixed<13,1>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+    q_dense_5:
+      Precision:
+        bias: ap_fixed<4,1>
+        weight: ap_fixed<13,1>
+      ReuseFactor: 4096
+      Trace: true
+      accum_t: ap_fixed<24,16>
+  Model:
+    Precision: ap_fixed<24,16>
+    ReuseFactor: 4096
+    Strategy: Resource

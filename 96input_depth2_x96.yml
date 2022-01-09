@@ -1,0 +1,70 @@
+train:
+  dev_directory: ./dev_data
+  eval_directory: ./eval_data
+  feature:
+      frames: 5
+      hop_length: 512
+      n_fft: 1024
+      n_mels: 128
+      power: 2.0
+      downsample: True
+  fit:
+      batch_size: 512
+      compile:
+        loss: mean_squared_error
+        optimizer: adam
+      epochs: 100
+      shuffle: true
+      validation_split: 0.1
+      verbose: 1
+  max_fpr: 0.1
+  model:
+      input_dim: 96
+      batch_norm: true
+      latent_dim: 8
+      hidden_dim: 96
+      l1reg: 0
+      name: keras_model
+      encode_depth: 2
+      encode_in: 96
+      decode_depth: 2
+      decode_out: 96
+      quantization:
+          bits: f32
+          int_bits: None
+          last_bits: None
+          last_int_bits: None
+          relu_bits: None
+          relu_int_bits: None
+  model_directory: ./model/model_config/96input_depth2_x96
+  pruning:
+      constant: false
+      decay: false
+      final_step: None
+      initial_step: 0
+      power: None
+      sparsity: None
+      initial_sparsity: None
+      final_sparsity: None
+  result_directory: ./result/model_config/96input_depth2_x96
+  result_file: result.csv
+convert:
+  x_npy_plot_roc: test_data/anomaly_detection/downsampled_128_5_to_32_4_skip_method.npy
+  y_npy_plot_roc: test_data/anomaly_detection/downsampled_128_5_to_32_4_ground_truths_skip_method.npy
+  x_npy_hls_test_bench: ./test_data/anomaly_detection/test_bench/downsampled_128_5_to_32_4_skip_method.npy
+  y_npy_hls_test_bench: ./test_data/anomaly_detection/test_bench/downsampled_128_5_to_32_4_ground_truths_skip_method.npy
+  model_file: model/train_config_bits_10_frames_5_mels_128_encDims_8_hidDims_64_halfcode_1_fan_64_bn_True_qbatch_False_l1reg_0/keras_model.h5
+  Build: True
+  FIFO_opt: False
+  OutputDir: hls/results/config/64input_depth2_x96/
+  ClockPeriod: 10
+  vivado_path: "/opt/local/Xilinx/Vivado/2019.1/bin:"
+  Board: pynq-z2
+  Trace: 0
+  fpga_part: xc7z020clg400-1
+  acc_name: anomaly_detection
+  Backend: Vivado
+  IOType: io_stream
+  Interface: axi_stream
+  Driver: python
+  Strategy: Resource

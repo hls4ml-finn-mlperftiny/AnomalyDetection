@@ -213,7 +213,7 @@ if __name__ == "__main__":
             #save train_data
             if not os.path.exists('train_time_data'):
                 os.makedirs('./train_time_data')
-            # numpy.save(train_data_save_load_directory, train_data)
+            numpy.save(train_data_save_load_directory, train_data)
             print("Train *NOT* saved to {}".format(train_data_save_load_directory))
 
         # train model

@@ -118,7 +118,7 @@ def get_qkeras_model(inputDim,hiddenDim=128,latentDim=8,
     h = QActivation(activation=quantized_relu(reluBits,reluIntBits))(h)
 
     # Declare decoder network
-    for i in range(decodeOut):
+    for i in range(decodeDepth):
         if i ==decodeDepth-1:
             h = QDense(decodeOut, **kwargs)(h)
         else:

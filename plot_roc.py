@@ -56,6 +56,7 @@ def plot_roc(model, hls_model, X_npy, y_npy, output_dir=None):
         plt.ylim([0, 1])
         plt.ylabel('True Positive Rate')
         plt.xlabel('False Positive Rate')
-    plt.show()
+    # plt.show()
     if output_dir != None:
         plt.savefig('{}/keras_vs_hls_roc_curve'.format(output_dir))
+        print("Keras vs HLS plot saved in {}".format(output_dir))
