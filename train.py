@@ -229,6 +229,7 @@ if __name__ == "__main__":
                                       decodeOut=param["model"]["decode_out"],
                                       batchNorm=param["model"]["batch_norm"],
                                       l1reg=param["model"]["l1reg"],
+                                      bits=param["model"]["quantization"]["bits"],
                                       intBits=param["model"]["quantization"]["int_bits"],
                                       reluBits=param["model"]["quantization"]["relu_bits"],
                                       reluIntBits=param["model"]["quantization"]["relu_int_bits"],
