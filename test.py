@@ -103,7 +103,8 @@ if __name__ == "__main__":
                                                     n_fft=param["feature"]["n_fft"],
                                                     hop_length=param["feature"]["hop_length"],
                                                     power=param["feature"]["power"],
-                                                    downsample=param["feature"]["downsample"])
+                                                    downsample=param["feature"]["downsample"],
+                                                    input_dim=param["model"]["input_dim"])
                     predictions = model.predict(data)
                     if (tb):
                         path_to_wav_file, wav_filename = os.path.split(file_path)

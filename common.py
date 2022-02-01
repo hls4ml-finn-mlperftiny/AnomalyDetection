@@ -177,10 +177,11 @@ def file_to_vector_array(file_name,
         assert(input_dim % new_mels == 0)
 
         vector_array = numpy.zeros((vector_array_size, new_mels*new_frames))
+
         for t in range(new_frames):
             new_vec = log_mel_spectrogram[:, t: t + vector_array_size].T
-            print("offset is: {}\nvector array size is: {}\n len log_mel is: {}".format(offset, len(new_vec), len(log_mel_spectrogram)))
             vector_array[:, new_mels * t: new_mels * (t + 1)] = new_vec[:,offset::increment]
+
         return vector_array
     else:
         vector_array = numpy.zeros((vector_array_size, dims))

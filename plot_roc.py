@@ -4,8 +4,9 @@ from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 # import plotting
 import numpy as np
+from tqdm.notebook import tqdm
 
-def plot_roc(model, hls_model, X_npy, y_npy, output_dir=None):
+def plot_roc(model, hls_model, X_npy, y_npy, data_split_factor=1, output_dir=None):
     '''
     receives a keras model and an hls_model and plots 
     the roc_curve against the X_npy and y_npy. A plot
@@ -19,7 +20,7 @@ def plot_roc(model, hls_model, X_npy, y_npy, output_dir=None):
 
     # use a quarter of the test_set to save time
     for i in range(len(X)):
-        divider = int(len(X[i])/4)
+        divider = int(len(X[i])/data_split_factor)
         assert len(X) == len(y)
         X[i], y[i] = shuffle(X[i], y[i])
         X[i], y[i] = X[i][0:divider],  y[i][0:divider]
@@ -30,7 +31,7 @@ def plot_roc(model, hls_model, X_npy, y_npy, output_dir=None):
     for index, X_data in enumerate(X):
         keras_pred = [0. for ind in X_data]
         hls_pred = [0. for ind in X_data]
-        for file_idx, X_test in enumerate(X_data):
+        for file_idx, X_test in enumerate(tqdm(X_data)):
             keras_predictions = model.predict(X_test)
             keras_errors = np.mean(np.square(X_test-keras_predictions), axis=1)
             keras_pred[file_idx] = np.mean(keras_errors)

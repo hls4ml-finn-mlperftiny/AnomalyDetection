@@ -82,7 +82,7 @@ def list_to_vector_array(file_list,
                          hop_length=512,
                          power=2.0,
                          downsample=False,
-                         dims=640):
+                         input_dims=640):
     """
     convert the file_list to a vector array.
     file_to_vector_array() is iterated, and the output vector array is concatenated.
@@ -110,10 +110,10 @@ def list_to_vector_array(file_list,
                                                 hop_length=hop_length,
                                                 power=power,
                                                 downsample=downsample,
-                                                input_dim=dims)
+                                                input_dim=input_dims)
         if idx == 0:
             if downsample:
-                dataset = numpy.zeros((vector_array.shape[0] * len(file_list), mels*frames), float)
+                dataset = numpy.zeros((vector_array.shape[0] * len(file_list), input_dims), float)
             else:
                 dataset = numpy.zeros((vector_array.shape[0] * len(file_list), dims), float)
         dataset[vector_array.shape[0] * idx: vector_array.shape[0] * (idx + 1), :] = vector_array
@@ -212,7 +212,7 @@ if __name__ == "__main__":
                                               hop_length=param["feature"]["hop_length"],
                                               power=param["feature"]["power"],
                                               downsample=param["feature"]["downsample"],
-                                              dims = param["model"]["input_dim"])
+                                              input_dims = param["model"]["input_dim"])
             #save train_data
             if not os.path.exists('train_time_data'):
                 os.makedirs('./train_time_data')
@@ -231,6 +231,7 @@ if __name__ == "__main__":
                                       decodeOut=param["model"]["decode_out"],
                                       batchNorm=param["model"]["batch_norm"],
                                       l1reg=param["model"]["l1reg"],
+                                      bits=param["model"]["quantization"]["bits"],
                                       intBits=param["model"]["quantization"]["int_bits"],
                                       reluBits=param["model"]["quantization"]["relu_bits"],
                                       reluIntBits=param["model"]["quantization"]["relu_int_bits"],
@@ -259,7 +260,7 @@ if __name__ == "__main__":
                                          verbose=1,
                                          save_best_only=True)
         stopping = EarlyStopping(monitor='val_loss',
-                                 patience = 10 if param["pruning"]["constant"] == True else 10 if param["pruning"]["decay"] == True else 1000, verbose=1, mode='min')
+                                 patience = 10 if param["pruning"]["constant"] == True else 10 if param["pruning"]["decay"] == True else 10, verbose=1, mode='min')
         
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=1,
                                       mode='min', verbose=1, epsilon=0.001,

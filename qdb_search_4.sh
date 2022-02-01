@@ -1,0 +1,9 @@
+python train.py -c fold_bn_128input_depth3_16_6.yml; python test.py -c fold_bn_128input_depth3_16_6.yml
+python train.py -c fold_bn_128input_depth3_14_6.yml; python test.py -c fold_bn_128input_depth3_14_6.yml
+python train.py -c fold_bn_128input_depth3_12_6.yml; python test.py -c fold_bn_128input_depth3_12_6.yml
+python train.py -c fold_bn_96input_depth3_16_6.yml; python test.py -c fold_bn_96input_depth3_16_6.yml
+python train.py -c fold_bn_96input_depth3_14_6.yml; python test.py -c fold_bn_96input_depth3_14_6.yml
+python train.py -c fold_bn_96input_depth3_12_6.yml; python test.py -c fold_bn_96input_depth3_12_6.yml
+python train.py -c fold_bn_64input_depth3_16_6.yml; python test.py -c fold_bn_64input_depth3_16_6.yml
+python train.py -c fold_bn_64input_depth3_14_6.yml; python test.py -c fold_bn_64input_depth3_14_6.yml
+python train.py -c fold_bn_64input_depth3_12_6.yml; python test.py -c fold_bn_64input_depth3_12_6.yml
