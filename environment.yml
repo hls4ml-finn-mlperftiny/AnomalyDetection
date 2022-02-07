@@ -9,14 +9,14 @@ dependencies:
     - jupyter
     - pydot
     - graphviz
-    - git+https://github.com/nicologhielmetti/hls4ml.git@fifo_depth_opt#egg=hls4ml[profiling]
+    - git+https://github.com/hls4ml-finn-mlperftiny/hls4ml.git@qdense_batchnorm#egg=hls4ml[profiling]
     - matplotlib
     - numpy
     - PyYAML
     - scikit-learn
     - tensorflow
     - tqdm
-    - git+https://github.com/google/qkeras#egg=qkeras
+    - git+https://github.com/julesmuhizi/qkeras.git@qdense_batchnorm
     - keras-flops
     - git+https://github.com/kentaroy47/keras-Opcounter
     - keras-tuner
