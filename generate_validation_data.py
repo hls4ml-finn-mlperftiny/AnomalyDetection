@@ -25,49 +25,57 @@ def main(args):
     y = []
     downsample = param['feature']['downsample']
     input_dim = param['model']['input_dim']
-    n_mels = param['feature']['n_mels']
+    downsampled_mels = param['feature']['n_mels']
 
     for id_str in machine_id_list:
         print('id_str: {}'.format(id_str))
         # load test file
         X_machine_data = []
         y_machine_data = []
+        default_mels = 128 #Default mel_bins determined by MLCommons, FIXED/DO NOT CHANGE
+        default_frames = 5 #Default frames determined by MLCommons, FIXED/DO NOT CHANGE
+
+        downsampled_mels = 32 #TODO change to be from config file
+        inputs = 64 #TODO change to be from config file
+        frames = int(inputs/downsampled_mels)
+        skip = int(default_mels/downsampled_mels)
+
+        assert(inputs % downsampled_mels == 0)
+        assert(default_mels % downsampled_mels == 0)
+
         test_files, y_true = com.test_file_list_generator(target_dir, id_str, dir_name='validation', ext='bin')
 
         print("\n============== CREATING TEST DATA FOR A MACHINE ID ==============")
         for file_idx, file_path in tqdm(enumerate(test_files), total=len(test_files)):
-            data = np.fromfile(file_path)
-            data = data.astype('float')
-            print(data)
-            print('len_data: {}'.format(len(data)))
-            exit(-1)
-        quit(-1)
-    #         if downsample:
-    #             new_mels = 32
-    #             new_frames = int(input_dim/new_mels)
-    #             increment = int(n_mels / new_mels) #value by which to sample the full 640. 
-    #             offset = n_mels - new_mels*increment #ensures we sample something that is within the expected size
-    #             assert(input_dim % new_mels == 0)
+            file_inputs = []
+            binaryfile = np.fromfile(file_path, dtype=np.float32)
+            for range_min in range(0, len(binaryfile), default_mels):
+                single_sample = []
+                window = binaryfile[range_min:range_min+default_mels*default_frames]
+                if len(window)==640:
+                    for time_slice in range(frames):
+                        single_sample.extend(window[time_slice*default_mels:time_slice*default_mels+default_mels:skip])
+                    file_inputs.append(single_sample)
+            X_machine_data.append(file_inputs)
+        X.append(X_machine_data)
+        y.append(y_true)
+    print(len(X))
+    print(len(X[0]))
+    print(len(X[0][0]))
+    print(len(X[0][0][0]))
 
-    #             vector_array = np.zeros((vector_array_size, new_mels*new_frames))
 
-    #             for t in range(new_frames):
-    #                 new_vec = log_mel_spectrogram[:, t: t + vector_array_size].T
-    #                 vector_array[:, new_mels * t: new_mels * (t + 1)] = new_vec[:,offset::increment]
-
-    #     return vector_array
-    #         X_machine_data.append(data)
-    #     X.append(X_machine_data)
-    #     y.append(y_true)
-    
-    # #save validation_data
-    # if not os.path.exists('validation_data/anomaly_detection/'):
-    #     os.makedirs('validation_data/anomaly_detection/')
+    #save validation_data
+    if not os.path.exists('validation_data/anomaly_detection/'):
+        os.makedirs('validation_data/anomaly_detection/')
     # np.save(convert['x_npy_plot_roc'],X)
     # np.save(convert['y_npy_plot_roc'],y)
     # np.save(convert['x_npy_hls_test_bench'],X[0][0][0:10])
     # np.save(convert['y_npy_hls_test_bench'],y[0][0:10])
-
+    np.save(f'validation_data/anomaly_detection/{inputs}input_validation_data.npy',X)
+    np.save(f'validation_data/anomaly_detection/{inputs}input_validation_data_ground_truths.npy',y)
+    # np.save(convert['x_npy_hls_test_bench'],X[0][0][0:10])
+    # np.save(convert['y_npy_hls_test_bench'],y[0][0:10])
                     
                     
 
