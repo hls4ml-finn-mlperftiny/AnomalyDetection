@@ -1,0 +1,82 @@
+LayerName:
+  input_1:
+    Precision: ap_fixed<8,8>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<12,5>
+  q_activation:
+    Precision:
+      result: ap_ufixed<6,5>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<12,5>
+  q_activation_1:
+    Precision:
+      result: ap_ufixed<6,5>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<12,5>
+  q_activation_2:
+    Precision:
+      result: ap_ufixed<6,5>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<12,5>
+  q_activation_3:
+    Precision:
+      result: ap_ufixed<6,5>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<12,5>
+  q_activation_4:
+    Precision:
+      result: ap_ufixed<6,5>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<12,5>
+  q_dense:
+    Precision:
+      bias: ap_fixed<13,7>
+      weight: ap_fixed<13,7>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<14,8>
+  q_dense_batchnorm:
+    Precision:
+      bias: ap_fixed<13,7>
+      weight: ap_fixed<13,7>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<16,6>
+  q_dense_batchnorm_1:
+    Precision:
+      bias: ap_fixed<13,7>
+      weight: ap_fixed<13,7>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<12,5>
+  q_dense_batchnorm_2:
+    Precision:
+      bias: ap_fixed<13,7>
+      weight: ap_fixed<13,7>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<14,7>
+  q_dense_batchnorm_3:
+    Precision:
+      bias: ap_fixed<13,7>
+      weight: ap_fixed<13,7>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<12,5>
+  q_dense_batchnorm_4:
+    Precision:
+      bias: ap_fixed<13,7>
+      weight: ap_fixed<13,7>
+    ReuseFactor: 128
+    Trace: true
+    accum_t: ap_fixed<12,5>
+Model:
+  Strategy: Resource
+  Precision: ap_fixed<16,8>
+  ReuseFactor: 128
