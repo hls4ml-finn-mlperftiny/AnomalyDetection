@@ -1,3 +1,4 @@
+from tkinter import Y
 import tensorflow as tf
 import yaml
 import argparse
@@ -6,7 +7,7 @@ import numpy as np
 from plot_roc import plot_roc
 
 import hls4ml
-
+from hls4ml.converters import convert_from_keras_model
 import matplotlib.pyplot as plt
 
 def is_tool(name):
@@ -37,9 +38,10 @@ def load_model(file_path):
 
 def main(args):
 
-    convert_config = yaml_load(args.config)
+    config = yaml_load(args.config)
+    convert_config = config['convert']
 
-    os.environ['PATH'] = convert_config['convert']['vivado_path'] + os.environ['PATH']
+    os.environ['PATH'] = convert_config['vivado_path'] + os.environ['PATH']
     print('-----------------------------------')
     if not is_tool('vivado_hls'):
         print('Xilinx Vivado HLS is NOT in the PATH')
@@ -47,74 +49,64 @@ def main(args):
         print('Xilinx Vivado HLS is in the PATH')
     print('-----------------------------------')
 
-    # test bench data
-    X_npy = np.load(convert_config['convert']['x_npy_hls_test_bench'], allow_pickle=True)
-    y_npy =np.load(convert_config['convert']['y_npy_hls_test_bench'], allow_pickle=True)
+    #define configuration parameters
+    BOARD_NAME = convert_config['board_name']
+    FPGA_PART = convert_config['fpga_part']
+    TB_DATA_DIR = convert_config['tb_data_dir']
+    X_VAL_DATA_DIR = convert_config['x_npy_val_dir']
+    Y_VAL_DATA_DIR = convert_config['y_npy_val_dir']
+    X_TEST_DATA_DIR = convert_config['x_npy_dir']
+    Y_TEST_DATA_DIR = convert_config['y_npy_dir']
+    OUTPUT_DIR = convert_config['output_dir'] + f'_{BOARD_NAME}'
+    HLS_CONFIG = convert_config['hls_config']
+    CLOCK_PERIOD=convert_config['clock_period']
+    BACKEND=convert_config['backend']
+    IO_TYPE=convert_config['io_type']
+    INTERFACE=convert_config['interface']
+    DRIVER=convert_config['driver']
 
-    model = load_model(convert_config['convert']['model_file'])
+    # test bench datasets
+    X_tb = np.load(TB_DATA_DIR, allow_pickle=True)
+    X_profiling =  np.load(X_TEST_DATA_DIR, allow_pickle=True)
+
+    model = load_model(convert_config['model_file'])
     model.summary()
-
 
     hls4ml.model.optimizer.OutputRoundingSaturationMode.layers = ['Activation']
     hls4ml.model.optimizer.OutputRoundingSaturationMode.rounding_mode = 'AP_RND'
     hls4ml.model.optimizer.OutputRoundingSaturationMode.saturation_mode = 'AP_SAT'
-    hls_config = hls4ml.utils.config_from_keras_model(model, granularity='name')
-    hls_config['Model']['ReuseFactor'] = 16384
+    hls_config = yaml_load(HLS_CONFIG)
     hls_config['Model']['Strategy'] = 'Resource'
-    hls_config['Model']['Precision'] = 'ap_fixed<32,16>'
+    hls_config['Model']['Precision'] = 'ap_fixed<16,8>'
     hls_config['LayerName']['input_1']['Precision'] = 'ap_fixed<8,8>'
     for layer in hls_config['LayerName'].keys():
         hls_config['LayerName'][layer]['Trace'] = True
-        hls_config['LayerName'][layer]['ReuseFactor'] = 16384 #large number, hls4ml will clip to #inputs x layer_width
-        hls_config['LayerName'][layer]['accum_t'] = 'ap_fixed<32,16>'
+    
+    #prevent relu_merge from being applied
+    hls_config['SkipOptimizers'] = ['relu_merge']
 
+    hls_model = convert_from_keras_model(model=model,
+        clock_period=CLOCK_PERIOD,
+        backend=BACKEND,
+        board=BOARD_NAME,
+        part=FPGA_PART,
+        io_type=IO_TYPE,
+        interface=INTERFACE,
+        driver=DRIVER,
+        input_data_tb=TB_DATA_DIR,
+        output_data_tb=TB_DATA_DIR,
+        hls_config=hls_config,
+        output_dir=OUTPUT_DIR)
 
-
-    backend=convert_config['convert']['Backend'], 
-    clock_period=convert_config['convert']['ClockPeriod'],
-    io_type=convert_config['convert']['IOType'], 
-    interface=convert_config['convert']['Interface'], 
-    if convert_config['convert']['Backend'] == 'VivadoAccelerator':
-        board = convert_config['convert']['Board']
-        driver = convert_config['convert']['Driver']
-        cfg = hls4ml.converters.create_config(
-            backend=convert_config['convert']['Backend'], 
-            board=convert_config['convert']['Board'], 
-            interface=convert_config['convert']['Interface'], 
-            clock_period=convert_config['convert']['ClockPeriod'],
-            io_type=convert_config['convert']['IOType'], 
-            driver=convert_config['convert']['Driver'])
-    else:
-        part = convert_config['convert']['fpga_part']
-        cfg = hls4ml.converters.create_config(
-            backend=convert_config['convert']['Backend'], 
-            part=convert_config['convert']['fpga_part'],
-            clock_period=convert_config['convert']['ClockPeriod'],
-            io_type=convert_config['convert']['IOType'],)
-
-    # cfg['HLSConfig'] = convert_config['hls_config']['HLSConfig']
-    cfg['HLSConfig'] = hls_config
-    cfg['InputData'] = convert_config['convert']['x_npy_hls_test_bench']
-    cfg['OutputPredictions'] = convert_config['convert']['x_npy_hls_test_bench']
-    cfg['KerasModel'] = model
-    cfg['OutputDir'] = convert_config['convert']['OutputDir']
-
-    print("-----------------------------------")
-    print_dict(cfg)
-    print("-----------------------------------")
-
-    hls_model = hls4ml.converters.keras_to_hls(cfg)
-    if not os.path.exists(convert_config['convert']['OutputDir']):
-        os.makedirs(convert_config['convert']['OutputDir'])
-    hls4ml.utils.plot_model(hls_model, show_shapes=True, show_precision=True, to_file='{}/model_hls4ml.png'.format(convert_config['convert']['OutputDir']))
+    #hls4ml.utils.plot_model(hls_model, show_shapes=True, show_precision=True, to_file='{}/model_hls4ml.png'.format(OUTPUT_DIR))
     hls_model.compile()
 
     # profiling / testing
-    # profiling data
-    X_prof = np.load(convert_config['convert']['x_npy_plot_roc'], allow_pickle=True)
-    hls4ml_pred, hls4ml_trace = hls_model.trace(np.ascontiguousarray(X_prof[0][0][0]))
+    PROFILE_DIR = OUTPUT_DIR+'/hls4ml_profiling_plots'
+    os.makedirs(PROFILE_DIR)
+    hls4ml_pred, hls4ml_trace = hls_model.trace(np.ascontiguousarray(X_profiling[0][0][0]))
     # Run tracing on a portion of the test set for the Keras model (floating-point precision)
-    keras_trace = hls4ml.model.profiling.get_ymodel_keras(model, X_prof[0][0])
+    keras_trace = hls4ml.model.profiling.get_ymodel_keras(model, X_profiling[0][0])
     for key in hls4ml_trace:
         plt.figure()
         plt.scatter(keras_trace[key][0], hls4ml_trace[key][0], color='black')
@@ -127,30 +119,37 @@ def main(args):
         plt.ylabel('hls4ml output')
         plt.legend()
 
-        plt.savefig(convert_config['convert']['OutputDir']+'hls4ml_v_keras_trace/{}'.format(key))
+        plt.savefig(f'{PROFILE_DIR}/{key}')
         print('profiled layer {}'.format(key))
-    plot_roc(model, hls_model, convert_config['convert']['x_npy_plot_roc'], convert_config['convert']['y_npy_plot_roc'], convert_config['convert']['OutputDir'])
 
-
-
+    print("-----------------------------------")
+    print('Plotting AUC Curves')
+    print("-----------------------------------")
+    os.makedirs(f'{OUTPUT_DIR}/test', exist_ok=1)
+    os.makedirs(f'{OUTPUT_DIR}/validation', exist_ok=1)
+    plot_roc(model, hls_model, X_TEST_DATA_DIR, Y_TEST_DATA_DIR,data_split_factor=4, output_dir=f'{OUTPUT_DIR}/test')
+    plot_roc(model, hls_model, X_VAL_DATA_DIR, Y_VAL_DATA_DIR,data_split_factor=1, output_dir=f'{OUTPUT_DIR}/validation')
 
      # Bitfile time
-    if bool(convert_config['convert']['Build']):
-        if bool(convert_config['convert']['FIFO_opt']):
+    if bool(convert_config['Build']):
+        if bool(convert_config['FIFO_opt']):
             from hls4ml.model.profiling import optimize_fifos_depth
-            hls_model = optimize_fifos_depth(model, output_dir=convert_config['convert']['OutputDir'],
-                                             clock_period=convert_config['convert']['ClockPeriod'],
-                                             backend=convert_config['convert']['Backend'],
-                                             input_data_tb=os.path.join(convert_config['convert']['x_npy_hls_test_bench']),
-                                             output_data_tb=os.path.join(convert_config['convert']['x_npy_hls_test_bench']),
-                                             board=convert_config['convert']['Board'], hls_config=convert_config['hls_config']['HLSConfig'])
+            hls_model = optimize_fifos_depth(model, output_dir=OUTPUT_DIR,
+                                             clock_period=CLOCK_PERIOD,
+                                             backend=BACKEND,
+                                             input_data_tb=X_tb,
+                                             output_data_tb=X_tb,
+                                             board=BOARD_NAME, 
+                                             hls_config=hls_config)
         else:
             hls_model.build(reset=False, csim=True, cosim=True, validation=True, synth=True, vsynth=True, export=True)
-            hls4ml.report.read_vivado_report(convert_config['convert']['OutputDir'])
-        if convert_config['convert']['Backend'] == 'VivadoAccelerator':
+            hls4ml.report.read_vivado_report(OUTPUT_DIR)
+        if BACKEND == 'VivadoAccelerator':
+            output_keras = model.predict(np.ascontiguousarray(X_tb))
+            output_hls = hls_model.predict(np.ascontiguousarray(X_tb))
+            hls4ml.writer.vivado_accelerator_writer.VivadoAcceleratorWriter.write_header_file(X_tb, X_tb, output_keras, output_hls, 10, OUTPUT_DIR + '/sdk/common/data.h')
             hls4ml.templates.VivadoAcceleratorBackend.make_bitfile(hls_model)
     
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str, help="specify yaml config")

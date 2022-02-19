@@ -1,0 +1,71 @@
+train:
+  dev_directory: ./dev_data
+  eval_directory: ./eval_data
+  feature:
+      frames: 5
+      hop_length: 512
+      n_fft: 1024
+      n_mels: 128
+      power: 2.0
+      downsample: True
+  fit:
+      batch_size: 512
+      compile:
+        loss: mean_squared_error
+        optimizer: adam
+      epochs: 100
+      shuffle: true
+      validation_split: 0.1
+      verbose: 1
+  max_fpr: 0.1
+  model:
+      input_dim: 64
+      batch_norm: true
+      latent_dim: 8
+      hidden_dim: 64
+      l1reg: 0
+      name: qdense_batchnorm_model
+      encode_depth: 2
+      encode_in: 64
+      decode_depth: 2
+      decode_out: 64
+      quantization:
+          bits: 12
+          int_bits: 6
+          last_bits: 12
+          last_int_bits: 0
+          relu_bits: 6
+          relu_int_bits: 6
+  model_directory: ./model/model_config/fold_bn_run_2/fold_bn_64input_depth2_12_6
+  result_directory: ./result/model_config/fold_bn_run_2/fold_bn_64input_depth2_12_6
+  pruning:
+      constant: false
+      decay: false
+      final_step: None
+      initial_step: 0
+      power: None
+      sparsity: None
+      initial_sparsity: None
+      final_sparsity: None
+  result_file: result.csv
+convert:
+  Build: True
+  FIFO_opt: False
+  vivado_path: '/tools/Xilinx/Vivado/2019.1/bin:'
+  model_file: models/ad07/model.h5
+  hls_config: models/ad07/hls4ml_config.yml
+  board_name: pynq-z2
+  fpga_part: xc7z020clg400-1
+  tb_data_dir: test_data/anomaly_detection/test_bench/downsampled_128_5_to_32_2_skip_method.npy
+  x_npy_val_dir: validation_data/anomaly_detection/64input_validation_data.npy
+  y_npy_val_dir: validation_data/anomaly_detection/64input_validation_data_ground_truths.npy
+  x_npy_dir: test_data/anomaly_detection/evaluation/downsampled_128_5_to_32_2_skip_method.npy
+  y_npy_dir: test_data/anomaly_detection/evaluation/downsampled_128_5_to_32_2_ground_truths_skip_method.npy
+  output_dir: hls/ad07
+  clock_period: 10
+  backend: VivadoAccelerator
+  io_type: io_stream
+  interface: axi_master
+  driver: c
+
+
